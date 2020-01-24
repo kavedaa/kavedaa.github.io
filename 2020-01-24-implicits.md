@@ -30,9 +30,9 @@ given [Left, Right]
   for Lub[Left | Right] { 
 }
 
-def f(given Context) = { }
+def foo(given Context) = { }
 
-f(given context)
+foo(given context)
 
 def instrumented[D, R, A]
   (given instrument: Instrument[R])
