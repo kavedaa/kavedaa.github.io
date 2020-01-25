@@ -36,7 +36,7 @@ foo(with context)
 
 def instrumented[D, R, A]
   (with instrument: Instrument[R])
-  (block: Connector[D]? => A)
+  (block: Connector[D] ?=> A)
   (with Connector[D]): instrument.Instrumented[A] = {
 }
 
