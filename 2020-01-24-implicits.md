@@ -37,7 +37,7 @@ foo(given context)
 def instrumented[D, R, A]
   (given instrument: Instrument[R])
   (block: (given Connector[D]) => A)
-  (given connector: Connector[D]): instrument.Instrumented[A] = {
+  (given Connector[D]): instrument.Instrumented[A] = {
 }
 
 instrumented(given instrument) { 1 }
