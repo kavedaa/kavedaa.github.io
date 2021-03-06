@@ -18,7 +18,7 @@ val dialog = new DerivedDialog[Person]`
 
 and have that generate a dialog like this?
 
-(image)
+![bilde](https://user-images.githubusercontent.com/1285029/110221254-80d78180-7ecb-11eb-9080-de41ddaab601.png)
 
 Yes, we can, and it this article we will see how.
 
