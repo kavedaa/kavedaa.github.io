@@ -7,13 +7,13 @@ Basically if we have a type class (or trait) like `trait Foo[A]`, we can use the
 Can we (ab)use this for automatic user interface generation? For instance, say we have:
 
 ```scala
-case class Person(firstName: String, lastName: String, birthDate: LocalDate)`
+case class Person(firstName: String, lastName: String, birthDate: LocalDate)
 ```
 
 can we write code that enables us to use a simple one-liner like:
 
 ```scala
-val dialog = new DerivedDialog[Person]`
+val dialog = new DerivedDialog[Person]
 ```
 
 and have that generate a dialog like this?
@@ -116,7 +116,6 @@ JavaFX uses a "scene graph" which is a tree-like hierarchy of `Node`s. Nodes can
 and then put the `content` inside a `Dialog`, which is not shown here.
 
 Not too much hassle, to be sure, but it would still great if we could automate it.
-
 
 
 
