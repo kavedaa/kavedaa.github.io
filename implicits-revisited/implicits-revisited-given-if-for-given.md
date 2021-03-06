@@ -1,4 +1,4 @@
-## Implicits revisited: examples for proposal of given/if/for + (with)
+## Implicits revisited: examples for proposal of given/if/for + given
 
 ```scala
 given for Bar { }
@@ -30,16 +30,21 @@ given [Left, Right]
   for Lub[Left | Right] { 
 }
 
-def foo(with Context) = { }
+def foo given Context = { }
 
-foo(with context)
+foo given ctx
+
+class C given Context extends A with B
+
+new C given ctx with D
 
 def instrumented[D, R, A]
-  (with instrument: Instrument[R])
-  (block: Connector[D] ?=> A)
-  (with Connector[D]): instrument.Instrumented[A] = {
+  given instrument: Instrument[R]
+  (block: (given Connector[D]) => A)
+  given Connector[D]
+  : instrument.Instrumented[A] = {
 }
 
-instrumented(with instrument) { 1 }
+instrumented given instrument { 1 }
 
 ```
