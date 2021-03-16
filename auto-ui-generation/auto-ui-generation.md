@@ -293,7 +293,7 @@ class DerivedDialog[A >: Null : Editor](value0: Option[A] = None) extends Dialog
 end DerivedDialog
 ```
 
-and with an additinal primitive `Editor[Boolean]`, some tweaking of "camel cased" label strings, and some enhancements to the container/layouter logic (all which are left as exercises for the reader, or you can see the complete code here), we can simply call:
+and with an additinal primitive `Editor[Boolean]`, some tweaking of "camel cased" label strings, and some enhancements to the container/layouter logic (all which are left as exercises for the reader, or you can see the complete code [here](https://github.com/kavedaa/kavedaa.github.io/tree/master/auto-ui-generation)), we can simply call:
 
 ```scala
 new DerivedDialog(Some(Person("John", "Smith", LocalDate.now, Pet("Fido", true))))
