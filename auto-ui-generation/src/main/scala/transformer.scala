@@ -21,10 +21,11 @@ object Transformer:
 
   inline given [A <: Product] (using m: Mirror.ProductOf[A]): Transformer[A] =
     new Transformer[A]:
-      val elemTransformers = summonAll[Tuple.Map[m.MirroredElemTypes, Transformer]].toList.asInstanceOf[List[Transformer[Any]]]  
+      type ElemTransformers = Tuple.Map[m.MirroredElemTypes, Transformer]
+      val elemTransformers = summonAll[ElemTransformers].toList.asInstanceOf[List[Transformer[Any]]]  
       def f(a: A): A = 
-        val elems = a.productIterator.toSeq
-        val transformed = elems.zip(elemTransformers) map { case (elem, transformer) => 
+        val elems = a.productIterator.toList
+        val transformed = elems.zip(elemTransformers) map { (elem, transformer) => 
           transformer.f(elem) 
         }
         val tuple = transformed.foldRight[Tuple](EmptyTuple)(_ *: _)

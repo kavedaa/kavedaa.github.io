@@ -2,7 +2,7 @@
 
 Scala 3 has a lot of cool new features. Among those is so-called [type class derivation](http://dotty.epfl.ch/docs/reference/contextual/derivation.html), which isn't really a single feature in itself, but rather a set of low-level technologies that enables the automatic implementation of type classes for certain composite types.
 
-Basically if we have a type class (or trait) like `trait Foo[A]`, we can use these technologies to write code that implements `Foo` for any given `A`, if `A` is a product type (e.g. `case class`) or sum type (e.g. `enum`).
+Basically if we have a type class (or trait) like `trait Foo[A]`, we can use these technologies to write code that implements `Foo` for any `A`, if `A` is a product type (e.g. `case class`) or sum type (e.g. `enum`).
 
 Can we (ab)use this for automatic user interface generation?
 
@@ -79,10 +79,11 @@ Here's how we can do that with the new Scala 3 features:
 ```scala
 inline given [A <: Product] (using m: Mirror.ProductOf[A]): Transformer[A] =
   new Transformer[A]:
-    val elemTransformers = summonAll[Tuple.Map[m.MirroredElemTypes, Transformer]].toList.asInstanceOf[List[Transformer[Any]]]  
+    type ElemTransformers = Tuple.Map[m.MirroredElemTypes, Transformer]
+    val elemTransformers = summonAll[ElemTransformers].toList.asInstanceOf[List[Transformer[Any]]]  
     def f(a: A): A = 
-      val elems = a.productIterator.toSeq
-      val transformed = elems.zip(elemTransformers) map { case (elem, transformer) => 
+      val elems = a.productIterator.toList
+      val transformed = elems.zip(elemTransformers) map { (elem, transformer) => 
         transformer.f(elem) 
       }
       val tuple = transformed.foldRight[Tuple](EmptyTuple)(_ *: _)
@@ -97,19 +98,20 @@ There's a bit of stuff going on here. Notable new features being used are:
 
 Let's look at it in a little more detail. `Mirror.ProductOf` is synthesized automatically by the compiler for all product types (e.g. case classes), so it will always be available here. This class contains meta-information about the case class that we can use for inspecting it.
 
-First we summon given instances for `Transformer` each of the element types of the case class:
+First we summon given instances for `Transformer` for each of the element types of the case class:
 
 ```scala
-val elemTransformers = summonAll[Tuple.Map[m.MirroredElemTypes, Transformer]].toList.asInstanceOf[List[Transformer[Any]]]  
+type ElemTransformers = Tuple.Map[m.MirroredElemTypes, Transformer]
+val elemTransformers = summonAll[ElemTransformers].toList.asInstanceOf[List[Transformer[Any]]]  
 ```
 
- For the `Person` class `m.MirroredElemTypes` will be `(String, String, LocalDate)`. Using `Tuple.Map` we turn that into `(Transformer[String], Transformer[String], Transformer[LocalDate])` which we in turn pass (as a type) to Scala's `summonAll` method. This returns a `Tuple` containing corresponding given instances for these types. We turn that tuple into a list (and explicitly remind the compiler of the type of that list).
+ For the `Person` class `m.MirroredElemTypes` will be `(String, String, LocalDate)`. Using `Tuple.Map` we turn that into `(Transformer[String], Transformer[String], Transformer[LocalDate])` which we in turn pass (as a type) to Scala's `summonAll` method. This returns a `Tuple` containing corresponding given instances for these types. We turn that tuple into a list (and remind the compiler of the type of that list).
 
 Then we can implement the transformation method `f`. This takes an actual instance of the class we are operating on, such as a `Person`, and returns a new instance of that class, with the elements transformed by the individual transformers. First we put all the elements of the class into a list, and then we map each element with the corresponding transformer instance:
 
 ```scala
 val elems = a.productIterator.toList
-val transformed = elems.zip(elemTransformers) map { case (elem, transformer) => 
+val transformed = elems.zip(elemTransformers) map { (elem, transformer) => 
   transformer.f(elem) 
 }
 ```
@@ -168,9 +170,9 @@ JavaFX uses a "scene graph" which is a tree-like hierarchy of `Node`s. Nodes can
   }
 ```
 
-and then put the `content` inside a `Dialog`, which is not shown here.
+and then put the `content` inside a `Dialog` (not shown here).
 
-The `Person` + `Pet` example would be slightly more complex. Actually, I find it too tedious to write the code for that right now, so let's just move on and automate it instead.
+The `Person` + `Pet` example would be slightly more complex. Instead of writing it, let's just move on and automate it instead.
 
 ## Generating the UI
 
@@ -212,21 +214,22 @@ given Editor[LocalDate] with
 Now we can write the derivation of `Editor` for any case class:
 
 ```scala
-  inline given [A <: Product] (using m: Mirror.ProductOf[A]): Editor[A] =
-    new Editor[A]:
-      val labels = constValueTuple[m.MirroredElemLabels].toList.asInstanceOf[List[String]]
-      val elemEditors = summonAll[Tuple.Map[m.MirroredElemTypes, Editor]].toList.asInstanceOf[List[Editor[Any]]]
-      val containers = labels.zip(elemEditors) map { case (label, editor) => editor.container(label) }
-      def getValue = 
-        val values = elemEditors.map(_.getValue)
-        val tuple = values.foldRight[Tuple](EmptyTuple)(_ *: _)
-        m.fromProduct(tuple)            
-      def setValue(a: A) =
-        val elems = a.productIterator.toSeq
-        elems.zip(elemEditors) foreach { case (elem, editor) => 
-          editor.setValue(elem)
-        }
-      def container(label: String) = Container.Composite(label, containers)
+inline given [A <: Product] (using m: Mirror.ProductOf[A]): Editor[A] =
+  new Editor[A]:
+    val labels = constValueTuple[m.MirroredElemLabels].toList.asInstanceOf[List[String]]
+    type ElemEditors = Tuple.Map[m.MirroredElemTypes, Editor]
+    val elemEditors = summonAll[ElemEditors].toList.asInstanceOf[List[Editor[Any]]]
+    val containers = labels.zip(elemEditors) map { (label, editor) => editor.container(label) }
+    def getValue = 
+      val values = elemEditors.map(_.getValue)
+      val tuple = values.foldRight[Tuple](EmptyTuple)(_ *: _)
+      m.fromProduct(tuple)            
+    def setValue(a: A) =
+      val elems = a.productIterator.toList
+      elems.zip(elemEditors) foreach { (elem, editor) => 
+        editor.setValue(elem)
+      }
+    def container(label: String) = Container.Composite(label, containers)
 ```
 
 This is very similar to the derivation of `Transformer`. The one additional feature used is that here we also get the element labels using `constValueTuple[m.MirroredElemLabels]` so that we can render these on the UI. 
@@ -256,7 +259,7 @@ There is one crucial thing missing. The documentation for given instances says t
 
 *"A given instance without type or context parameters is initialized on-demand, the first time it is accessed. If a given has type or context parameters, a fresh instance is created for each reference."*
 
-This means that if we have several `String` elements in our case class, only one `given Editor[String]` will be created. This is clearly not what we want, since there then also will be only one `TextField` shared by those element. Instead, we want to create a fresh instance of `Editor[String]` for each reference.
+This means that if we have several `String` elements in our case class, only one `given Editor[String]` will be created. This is clearly not what we want, since there then also will be only one `TextField` shared by those elements. Instead, we want to create a fresh instance of `Editor[String]` for each reference.
 
 We can achieve that by using a dummy context parameter. With some clever naming, it also reads quite well:
 
@@ -293,7 +296,7 @@ class DerivedDialog[A >: Null : Editor](value0: Option[A] = None) extends Dialog
 end DerivedDialog
 ```
 
-and with an additinal primitive `Editor[Boolean]`, some tweaking of "camel cased" label strings, and some enhancements to the container/layouter logic (all which are left as exercises for the reader, or you can see the complete code [here](https://github.com/kavedaa/kavedaa.github.io/tree/master/auto-ui-generation)), we can simply call:
+and with an additional primitive `Editor[Boolean]`, some tweaking of "camel cased" label strings, and some enhancements to the container/layouter logic (all which are left as exercises for the reader, or you can see the [complete code](https://github.com/kavedaa/kavedaa.github.io/tree/master/auto-ui-generation)), we can simply call:
 
 ```scala
 new DerivedDialog(Some(Person("John", "Smith", LocalDate.now, Pet("Fido", true))))

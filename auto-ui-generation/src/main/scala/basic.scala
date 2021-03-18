@@ -40,15 +40,16 @@ object Editor:
   inline given [A <: Product] (using m: Mirror.ProductOf[A]): Editor[A] =
     new Editor[A]:
       val labels = constValueTuple[m.MirroredElemLabels].toList.asInstanceOf[List[String]]
-      val elemEditors = summonAll[Tuple.Map[m.MirroredElemTypes, Editor]].toList.asInstanceOf[List[Editor[Any]]]
-      val containers = labels.zip(elemEditors) map { case (label, editor) => editor.container(label) }
+      type ElemEditors = Tuple.Map[m.MirroredElemTypes, Editor]
+      val elemEditors = summonAll[ElemEditors].toList.asInstanceOf[List[Editor[Any]]]
+      val containers = labels.zip(elemEditors) map { (label, editor) => editor.container(label) }
       def getValue = 
         val values = elemEditors.map(_.getValue)
         val tuple = values.foldRight[Tuple](EmptyTuple)(_ *: _)
         m.fromProduct(tuple)            
       def setValue(a: A) =
-        val elems = a.productIterator.toSeq
-        elems.zip(elemEditors) foreach { case (elem, editor) => 
+        val elems = a.productIterator.toList
+        elems.zip(elemEditors) foreach { (elem, editor) => 
           editor.setValue(elem)
         }
       def container(label: String) = Container.Composite(label, containers)
