@@ -83,9 +83,7 @@ inline given [A <: Product] (using m: Mirror.ProductOf[A]): Transformer[A] =
     val elemTransformers = summonAll[ElemTransformers].toList.asInstanceOf[List[Transformer[Any]]]  
     def f(a: A): A = 
       val elems = a.productIterator.toList
-      val transformed = elems.zip(elemTransformers) map { (elem, transformer) => 
-        transformer.f(elem) 
-      }
+      val transformed = elems.zip(elemTransformers) map { (elem, transformer) => transformer.f(elem) }
       val tuple = transformed.foldRight[Tuple](EmptyTuple)(_ *: _)
       m.fromProduct(tuple)      
 ```
@@ -226,9 +224,7 @@ inline given [A <: Product] (using m: Mirror.ProductOf[A]): Editor[A] =
       m.fromProduct(tuple)            
     def setValue(a: A) =
       val elems = a.productIterator.toList
-      elems.zip(elemEditors) foreach { (elem, editor) => 
-        editor.setValue(elem)
-      }
+      elems.zip(elemEditors) foreach { (elem, editor) => editor.setValue(elem) }
     def container(label: String) = Container.Composite(label, containers)
 ```
 

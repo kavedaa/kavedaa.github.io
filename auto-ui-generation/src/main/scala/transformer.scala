@@ -25,9 +25,7 @@ object Transformer:
       val elemTransformers = summonAll[ElemTransformers].toList.asInstanceOf[List[Transformer[Any]]]  
       def f(a: A): A = 
         val elems = a.productIterator.toList
-        val transformed = elems.zip(elemTransformers) map { (elem, transformer) => 
-          transformer.f(elem) 
-        }
+        val transformed = elems.zip(elemTransformers) map { (elem, transformer) => transformer.f(elem) }
         val tuple = transformed.foldRight[Tuple](EmptyTuple)(_ *: _)
         m.fromProduct(tuple)      
 

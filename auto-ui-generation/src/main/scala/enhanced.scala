@@ -52,9 +52,7 @@ object Editor:
         m.fromProduct(tuple)            
       def setValue(a: A) =
         val elems = a.productIterator.toList
-        elems.zip(elemEditors) foreach { (elem, editor) => 
-          editor.setValue(elem)
-        }
+        elems.zip(elemEditors) foreach { (elem, editor) => editor.setValue(elem) }
       def container(label: String) = Container.Composite(label, containers)
 
 end Editor
