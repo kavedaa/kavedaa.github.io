@@ -1,5 +1,5 @@
 name := "auto-ui-generation"
 
-scalaVersion := "3.0.0-RC1"
+scalaVersion := "3.0.1"
 
 fork in run := true
