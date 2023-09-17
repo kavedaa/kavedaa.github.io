@@ -6,6 +6,8 @@ target/
 metals.sbt
 null
 
+.scala-build/
+
 .vscode/
 
 .dotty-ide*
